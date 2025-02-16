@@ -474,13 +474,47 @@ const App: React.FC<AppProps> = ({ onThemeChange }: AppProps) => {
           break;
 
         case 'line-with-header':
-          const lines = rawText.split('\n').filter(line => line.trim());
-          if (lines.length === 0) break;
+          // First, split the text into lines while preserving quoted content
+          const lines: string[] = [];
+          let currentLine = '';
+          let insideQuotes = false;
+          
+          for (let i = 0; i < rawText.length; i++) {
+            const char = rawText[i];
+            
+            // Handle quote characters
+            if (char === '"') {
+              insideQuotes = !insideQuotes;
+              currentLine += char;
+              continue;
+            }
+            
+            // Handle newline characters
+            if (char === '\n' && !insideQuotes) {
+              if (currentLine.trim()) {
+                lines.push(currentLine.trim());
+              }
+              currentLine = '';
+              continue;
+            }
+            
+            // Add character to current line
+            currentLine += char;
+          }
+          
+          // Add the last line if it's not empty
+          if (currentLine.trim()) {
+            lines.push(currentLine.trim());
+          }
+          
+          // Filter out empty lines and get header
+          const filteredLines = lines.filter(line => line.trim());
+          if (filteredLines.length === 0) break;
           
           // First line is the header
-          const header = lines[0];
+          const header = filteredLines[0];
           // Rest are content lines
-          const contentLines = lines.slice(1);
+          const contentLines = filteredLines.slice(1);
           
           // For each content line, combine with header
           chunks = contentLines.map(line => `${header}\n${line}`);
